@@ -8,3 +8,6 @@ def your_function(foo: str, bar: int):
 @async_force_type # when stacking decorators, async_force_type must be applied as last (bottom)
 async def your_function(foo: str, bar: int):
    pass
+
+
+f = your_function(2, bar='test') # will throw a TypeError
