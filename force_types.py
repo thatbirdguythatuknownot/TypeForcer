@@ -3,10 +3,8 @@ import typing
 def force_types(func: typing.Callable):
     def wrapper(*args, **kwargs):
         annotations = func.__annotations__
-
-        kwargs_list = list(annotations.keys())
-        for i, arg in enumerate(args):
-            kwargs[kwargs_list[i]] = arg
+        for missing_kwarg, arg in zip(annotations.keys(), args):
+            kwargs[missing_kwarg] = arg  
 
         for kwarg, value in kwargs.items():
             if not isinstance(value, annotations[kwarg]):
@@ -18,10 +16,8 @@ def force_types(func: typing.Callable):
 def async_force_types(func: typing.Coroutine):
     async def wrapper(*args, **kwargs):
         annotations = func.__annotations__
-
-        kwargs_list = list(annotations.keys())
-        for i, arg in enumerate(args):
-            kwargs[kwargs_list[i]] = arg
+        for missing_kwarg, arg in zip(annotations.keys(), args):
+            kwargs[missing_kwarg] = arg  
 
         for kwarg, value in kwargs.items():
             if not isinstance(value, annotations[kwarg]):
