@@ -13,7 +13,7 @@ def your_function(foo: str, bar: int):
 
 
 @async_force_types # when stacking decorators, async_force_type must be applied as last (bottom)
-async def your_function(foo: str, bar: int):
+async def your_async_function(foo: str, bar: int):
    pass
 
 
