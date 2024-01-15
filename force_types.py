@@ -1,6 +1,6 @@
 import typing
 
-def force_type(func: typing.Callable):
+def force_types(func: typing.Callable):
     def wrapper(*args, **kwargs):
         annotations = func.__annotations__
 
@@ -15,7 +15,7 @@ def force_type(func: typing.Callable):
         return func(**kwargs)
     return wrapper
 
-def async_force_type(func: typing.Coroutine):
+def async_force_types(func: typing.Coroutine):
     async def wrapper(*args, **kwargs):
         annotations = func.__annotations__
 
