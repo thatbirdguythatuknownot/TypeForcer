@@ -20,5 +20,9 @@ async def async_your_function(foo: str, bar: int) -> None:
    pass
 
 
-f = your_function(['hi', 5.0], bar=5) # will throw a TypeError (due to invalid passed list (float instead of int))
+```
+```py
+your_function(['hi', 5.0], bar=5) # will throw a TypeError (due to invalid passed list (float instead of int))
+
+>>> TypeError: ['hi', 5.0] -> Invalid type <class 'list'> for argument "foo" with hinted type list[str | int]
 ```
