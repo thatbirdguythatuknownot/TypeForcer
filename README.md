@@ -1,6 +1,7 @@
 # TypeForcer
-Simple copy-paste decorators to 'force' types and GenericAliases (nested type hints in Iterators) for function parameters in Python with only type hinting!
+Simple copy-paste decorators to 'force' types for function parameters in Python with only type hinting!
 
+Comes with `GenericAlias` support! (nested type hints in Iterators such as `list[int]`)
 
 Its easy to use:
 ```py
