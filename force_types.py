@@ -52,7 +52,7 @@ def force_types(func: typing.Callable):
 
                 if raise_exception:
                     raise TypeError(
-                        f"Invalid return type {type(value)} [{value}] should be of type {annotation}"
+                        f'{value} -> Invalid type {type(value)} for argument "{kwarg}" with hinted type {annotation}'
                     )
 
         return func(**kwargs)
@@ -110,7 +110,7 @@ def async_force_types(func: typing.Coroutine):
 
                 if raise_exception:
                     raise TypeError(
-                        f"Invalid return type {type(value)} [{value}] should be of type {annotation}"
+                        f'{value} -> Invalid type {type(value)} for argument "{kwarg}" with hinted type {annotation}'
                     )
 
         return await func(**kwargs)
