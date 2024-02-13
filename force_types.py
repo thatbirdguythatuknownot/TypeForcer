@@ -22,8 +22,6 @@ def force_types(func: typing.Callable):
                 typing.Union[
                     typing.Iterable,
                     typing.AsyncIterable,
-                    typing.Iterator,
-                    typing.AsyncIterator,
                 ]
             ) and hasattr(annotation, "__args__"):
                 raise_exception = False
@@ -80,8 +78,6 @@ def async_force_types(func: typing.Coroutine):
                 typing.Union[
                     typing.Iterable,
                     typing.AsyncIterable,
-                    typing.Iterator,
-                    typing.AsyncIterator,
                 ]
             ) and hasattr(annotation, "__args__"):
                 raise_exception = False
