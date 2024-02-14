@@ -6,8 +6,7 @@ Comes with `GenericAlias` support! (nested type hints in Iterables such as `list
 Its easy to use:
 ```py
 from force_types import *
-# force types supports ONE level of type hint nesting: -> list[str | int]
-# does NOT support: -> list[dict[str, int]] (TWO level hint nesting)
+# can now support more than one level of nesting: -> list[dict[str, int]] (TWO level hint nesting)
 
 
 @force_types # when stacking decorators, force_type must be applied as last (bottom)
@@ -24,5 +23,8 @@ async def async_your_function(foo: str, bar: int) -> None:
 ```py
 your_function(['hi', 5.0], bar=5) # will throw a TypeError (due to invalid passed list (float instead of int))
 
->>> TypeError: ['hi', 5.0] -> Invalid type <class 'list'> for argument "foo" with hinted type list[str | int]
+>>> TypeError: ['hi', 5.0] -> argument "foo" type mismatch!
+>>> recursive checker traceback (deepest layer first):
+>>>     type: float -> fails: str | int (at level 1) (from value: 5.0)
+>>>     type: list -> fails: list (at level 0, index 1) (from value: ['hi', 5.0])
 ```
