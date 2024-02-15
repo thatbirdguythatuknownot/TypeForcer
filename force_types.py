@@ -3,6 +3,7 @@ import types
 import typing
 from dataclasses import dataclass
 from itertools import chain
+from sys import version_info
 
 def type_name(typ: type) -> str:
     if hasattr(typ, "__qualname__"):
@@ -48,8 +49,8 @@ def recursive_check(value, annotation, level=0) -> list[Failed] | None:
     if annotation in (Any, object, Ellipsis):
         return None
 
-    # `typing.Never` fails for *any* Python value.
-    if annotation is typing.Never:
+    # `typing.NoReturn` and `typing.Never` fail for *any* Python value.
+    if annotation in (typing.NoReturn, typing.Never):
         early_fail = True
 
     # `| None` or `Optional` case.
