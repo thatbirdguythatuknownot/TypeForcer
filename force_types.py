@@ -60,10 +60,7 @@ def recursive_check(value, annotation, level=0) -> list[Failed] | None:
         early_fail = True
 
     else:
-        if hasattr(annotation, "__origin__"):
-            annotation_origin = annotation.__origin__
-        else:
-            annotation_origin = annotation
+        annotation_origin = getattr(annotation, "__origin__", annotation)
 
         # Check for things like `str | int` and `typing.Union[str, int]` and
         # turn them into `(str, int)`.
