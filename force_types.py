@@ -36,80 +36,126 @@ class Failed:
 
     def __str__(self):
         value_typename = type_name(type(self.value))
-        return f"type: {value_typename} -> fails: {self.annotation} (from value: {self.value!r})"
+        return (
+            f"type: {value_typename} -> fails: {self.annotation} "
+            f"(from value: {self.value!r})"
+        )
 
-# returns [Failed(offending_value, annotation), ...] if it failed, otherwise None
-def recursive_check(value, annotation, level=0):
-    if annotation is None:
+# Returns `[Failed(), ...]` if it failed, otherwise `None`
+def recursive_check(value, annotation, level=0) -> list[Failed] | None:
+    # `Any` and `object` succeed for *any* Python value.
+    # Consider `...` (`Ellipsis`) an all-pass too.
+    if annotation in (Any, object, Ellipsis):
+        return None
+
+    # `typing.Never` fails for *any* Python value.
+    if annotation is typing.Never:
+        early_fail = True
+
+    # `| None` or `Optional` case.
+    if annotation in (None, types.NoneType):
         if value is None:
             return None
-        return [Failed(value, Annotation(None, level=level))]
+        early_fail = True
 
-    annotation_origin = getattr(annotation, "__origin__", annotation)
-    if not isinstance(value, annotation_origin):
-        return [Failed(value, Annotation(annotation, level=level))]
+    else:
+        if hasattr(annotation, "__origin__"):
+            annotation_origin = annotation.__origin__
+        else:
+            annotation_origin = annotation
 
-    # check for things like str | int and typing.Union[str, int] and
-    # turn them into (str, int)
-    # also turns Optional[str] into (str, type(None))
-    if isinstance(annotation, (types.UnionType, typing._UnionGenericAlias)):
-        annotation = annotation.__args__
-    if isinstance(annotation, tuple):
-        for annot in annotation:
-            if not recursive_check(value, annot, level + 1):
-                return None
+        # Check for things like `str | int` and `typing.Union[str, int]` and
+        # turn them into `(str, int)`.
+        # Also turns `typing.Optional[str]` into `(str, type(None)).`
+        # After converting into a tuple, it falls through to the next `if`
+        # statement.
+        if (
+            isinstance(annotation, types.UnionType)
+            or annotation_origin is typing.Union
+            or annotation_origin is typing.Optional
+        ):
+            annotation = annotation.__args__
+        # Check `(str, int)` in the way that the valid type for
+        # `value` is either `str` or `int`.
+        if isinstance(annotation, tuple):
+            for annot in annotation:
+                if not recursive_check(value, annot, level + 1):
+                    return None
+            early_fail = True
+        else:
+            early_fail = not isinstance(value, annotation_origin)
+
+    if early_fail:
         return [Failed(value, Annotation(annotation, level=level))]
 
     fail = None
     # GenericAlias support (nested hints): list[str | int], dict[int, int]
     if isinstance(
-        value,
-        (
-            typing.Iterable,
-            typing.AsyncIterable,
-        )
-    ) and not isinstance(
-        value,
-        (
-            typing.Iterator,
-            typing.AsyncIterator,
-        )
-    ) and hasattr(annotation, "__args__") and isinstance(
         annotation,
         (
             types.GenericAlias,
             typing._GenericAlias,
         )
     ):
-        if ann_args := annotation.__args__:
-            if annotation_origin in (tuple, typing.Tuple):
-                if len(value) != len(ann_args):
-                    return [Failed(value, Annotation(annotation, level=level))]
+        if isinstance(
+            value,
+            (
+                typing.Iterable,
+                typing.AsyncIterable,
+            )
+        ) and not isinstance(
+            value,
+            (
+                typing.Iterator,
+                typing.AsyncIterator,
+            )
+        ):
+            ann_args = annotation.__args__
+            failed_idx = -1
 
-                for i, (x, typ) in enumerate(zip(value, ann_args)):
-                    if fail := recursive_check(x, typ, level + 1):
-                        fail.append(Failed(value, Annotation(annotation, i, level)))
-                        break
+            if issubclass(annotation_origin, typing.Tuple):
+                # Handle something like `tuple[int, ...]` (homogenous tuple).
+                if len(ann_args) == 2 and ann_args[1] is Ellipsis:
+                    annot = ann_args[0]
+                    for i, x in enumerate(value):
+                        if fail := recursive_check(x, annot, level + 1):
+                            failed_idx = i
+                            break
 
-            elif annotation_origin in (dict, typing.Dict):
+                elif len(value) == len(ann_args):
+                    for i, (x, typ) in enumerate(zip(value, ann_args)):
+                        if fail := recursive_check(x, typ, level + 1):
+                            failed_idx = i
+                            break
+
+                else:
+                    fail = [Failed(value, Annotation(annotation, level=level))]
+
+            elif issubclass(annotation_origin, typing.Mapping):
                 tkey, tval = ann_args
 
                 for i, (key, val) in enumerate(value.items()):
                     if fail := recursive_check(key, tkey, level + 1):
-                        fail.append(Failed(value, Annotation(annotation, i, level)))
+                        failed_idx = i
                         break
                     if fail := recursive_check(val, tval, level + 1):
-                        fail.append(Failed(value, Annotation(annotation, i, level)))
+                        failed_idx = i
                         break
 
-            else:
+            else: # Generic case
                 if len(ann_args) == 1:
                     ann_args, = ann_args
 
                 for i, x in enumerate(value):
                     if fail := recursive_check(x, ann_args, level + 1):
-                        fail.append(Failed(value, Annotation(annotation, i, level)))
+                        failed_idx = i
                         break
+
+            if failed_idx >= 0:
+                fail.append(Failed(
+                    value,
+                    Annotation(annotation, failed_idx, level)
+                ))
     return fail
 
 def force_types(func: typing.Callable):
