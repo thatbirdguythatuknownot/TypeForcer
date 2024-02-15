@@ -44,9 +44,9 @@ class Failed:
 
 # Returns `[Failed(), ...]` if it failed, otherwise `None`
 def recursive_check(value, annotation, level=0) -> list[Failed] | None:
-    # `Any` and `object` succeed for *any* Python value.
+    # `typing.Any` and `object` succeed for *any* Python value.
     # Consider `...` (`Ellipsis`) an all-pass too.
-    if annotation in (Any, object, Ellipsis):
+    if annotation in (typing.Any, object, Ellipsis):
         return None
 
     # `typing.NoReturn` and `typing.Never` fail for *any* Python value.
