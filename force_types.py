@@ -42,6 +42,11 @@ class Failed:
             f"(from value: {self.value!r})"
         )
 
+if version_info < (3, 9):
+    Tuple = typing.Tuple
+else:
+    Tuple = tuple
+
 # Returns `[Failed(), ...]` if it failed, otherwise `None`
 def recursive_check(value, annotation, level=0) -> list[Failed] | None:
     # `typing.Any` and `object` succeed for *any* Python value.
@@ -111,7 +116,7 @@ def recursive_check(value, annotation, level=0) -> list[Failed] | None:
             ann_args = annotation.__args__
             failed_idx = -1
 
-            if issubclass(annotation_origin, typing.Tuple):
+            if issubclass(annotation_origin, Tuple):
                 # Handle something like `tuple[int, ...]` (homogenous tuple).
                 if len(ann_args) == 2 and ann_args[1] is Ellipsis:
                     annot = ann_args[0]
